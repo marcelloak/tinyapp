@@ -11,6 +11,10 @@ app.get('/', (request, response) => {
   response.send('Hello!');
 });
 
+app.get('/hello', (request, response) => {
+  response.send('<html><body>Hello <b>World</b></body></html>\n');
+});
+
 app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
 });
