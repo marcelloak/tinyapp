@@ -61,6 +61,11 @@ app.post('/urls', (request, response) => {
   response.redirect(`/urls/${short}`);
 });
 
+app.post('/urls/:shortURL', (request, response) => {
+  urlDatabase[request.params.shortURL] = request.body.longURL;
+  response.redirect(`/urls`);
+});
+
 app.post('/urls/:shortURL/delete', (request, response) => {
   delete urlDatabase[request.params.shortURL];
   response.redirect(`/urls`);
