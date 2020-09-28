@@ -44,19 +44,23 @@ app.get('/urls/:shortURL', (request, response) => {
   response.render('urls_show', templateVars);
 });
 
+app.get('/u/:shortURL', (request, response) => {
+  const longURL  = urlDatabase[request.params.shortURL];
+  if (longURL.includes('http://www.')) response.redirect(`${longURL}`);
+  else if (longURL.includes('www.')) response.redirect(`http://${longURL}`);
+  else response.redirect(`http://www.${longURL}`);
+});
+
 app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
 });
 
 app.post('/urls', (request, response) => {
-  console.log(request.body);
-  response.send('Ok');
+  const short = generateRandomString();
+  urlDatabase[short] = request.body.longURL;
+  response.redirect(`/urls/${short}`);
 });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
-  console.log(generateRandomString());
-  console.log(generateRandomString());
-  console.log(generateRandomString());
-  console.log(generateRandomString());
 });
