@@ -18,8 +18,13 @@ app.get('/hello', (request, response) => {
 });
 
 app.get('/urls', (request, response) => {
-  const templateVars = {urls: urlDatabase};
+  const templateVars = { urls: urlDatabase };
   response.render('urls_index', templateVars);
+});
+
+app.get('/urls/:shortURL', (request, response) => {
+  const templateVars = { shortURL: request.params.shortURL, longURL: request.params.longURL };
+  response.render('urls_show', templateVars);
 });
 
 app.get('/urls.json', (request, response) => {
