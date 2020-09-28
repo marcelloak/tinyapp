@@ -1,8 +1,21 @@
+const bodyParser = require('body-parser');
+const { request } = require('express');
 const express = require('express');
 const app = express();
 const PORT = 8080;
 
 app.set('view engine', 'ejs');
+app.use(bodyParser.urlencoded({extended: true}));
+
+const generateRandomString = function() {
+  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+  let rand = "";
+  let len = Math.ceil(Math.random() * 4) + 4; //random length from 5 to 8
+  for (let i = 0; i < len; i++) {
+    rand += characters.charAt(Math.floor(Math.random() * characters.length));;
+  }
+  return rand;
+}
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -22,6 +35,10 @@ app.get('/urls', (request, response) => {
   response.render('urls_index', templateVars);
 });
 
+app.get('/urls/new', (request, response) => {
+  response.render('urls_new');
+});
+
 app.get('/urls/:shortURL', (request, response) => {
   const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
   response.render('urls_show', templateVars);
@@ -31,6 +48,15 @@ app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
 });
 
+app.post('/urls', (request, response) => {
+  console.log(request.body);
+  response.send('Ok');
+});
+
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
+  console.log(generateRandomString());
+  console.log(generateRandomString());
+  console.log(generateRandomString());
+  console.log(generateRandomString());
 });
