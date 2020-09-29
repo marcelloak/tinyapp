@@ -1,11 +1,19 @@
 const bodyParser = require('body-parser');
-const { request } = require('express');
+const cookies = require('cookie-parser');
+const morgan = require('morgan');
 const express = require('express');
+
 const app = express();
 const PORT = 8080;
 
 app.set('view engine', 'ejs');
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(cookies());
+
+const urlDatabase = {
+  "b2xVn2": "http://www.lighthouselabs.ca",
+  "9sm5xK": "http://www.google.com",
+};
 
 const generateRandomString = function() {
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
@@ -17,11 +25,6 @@ const generateRandomString = function() {
   return rand;
 }
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
-};
-
 app.get('/', (request, response) => {
   response.send('Hello!');
 });
@@ -31,16 +34,17 @@ app.get('/hello', (request, response) => {
 });
 
 app.get('/urls', (request, response) => {
-  const templateVars = { urls: urlDatabase };
+  const templateVars = { urls: urlDatabase, username: request.cookies.username };
   response.render('urls_index', templateVars);
 });
 
 app.get('/urls/new', (request, response) => {
-  response.render('urls_new');
+  const templateVars = { username: request.cookies.username }
+  response.render('urls_new', templateVars);
 });
 
 app.get('/urls/:shortURL', (request, response) => {
-  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL] };
+  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL], username: request.cookies.username };
   response.render('urls_show', templateVars);
 });
 
@@ -53,6 +57,16 @@ app.get('/u/:shortURL', (request, response) => {
 
 app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
+});
+
+app.post('/login', (request, response) => {
+  response.cookie('username', request.body.username);
+  response.redirect(`/urls`);
+});
+
+app.post('/logout', (request, response) => {
+  response.clearCookie('username');
+  response.redirect(`/urls`);
 });
 
 app.post('/urls', (request, response) => {
