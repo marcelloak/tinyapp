@@ -14,7 +14,7 @@ app.use(cookies());
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
-    userID: "aJ48lW",
+    userID: "1",
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
@@ -57,6 +57,14 @@ const userLookup = function(email) {
   return false;
 }
 
+const urlsForUser = function(id) {
+  const urls = {};
+  for (const url in urlDatabase) {
+    if (urlDatabase[url].userID === id) urls[url] = urlDatabase[url];
+  }
+  return urls;
+}
+
 app.get('/', (request, response) => {
   
 });
@@ -72,7 +80,8 @@ app.get('/login', (request, response) => {
 });
 
 app.get('/urls', (request, response) => {
-  const templateVars = { urls: urlDatabase, user: users[request.cookies.userid] };
+  if (!request.cookies.userid) return response.redirect('/login');
+  const templateVars = { urls: urlsForUser(request.cookies.userid), user: users[request.cookies.userid] };
   response.render('urls_index', templateVars);
 });
 
@@ -83,6 +92,8 @@ app.get('/urls/new', (request, response) => {
 });
 
 app.get('/urls/:shortURL', (request, response) => {
+  if (!request.cookies.userid) return response.redirect('/login');
+  if (urlDatabase[request.params.shortURL].userID !== request.cookies.userid) return response.status(400).send('URL does not belong to current user');
   const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL].longURL, user: users[request.cookies.userid] };
   response.render('urls_show', templateVars);
 });
@@ -125,16 +136,20 @@ app.post('/logout', (request, response) => {
 
 app.post('/urls', (request, response) => {
   const short = generateRandomString();
-  urlDatabase[short] = request.body.longURL;
+  urlDatabase[short] = { longURL: request.body.longURL, userID: request.cookies.userid };
   response.redirect(`/urls/${short}`);
 });
 
 app.post('/urls/:shortURL', (request, response) => {
+  if (!request.cookies.userid) return response.redirect('/login');
+  if (urlDatabase[request.params.shortURL].userID !== request.cookies.userid) return response.status(400).send('URL does not belong to current user');
   urlDatabase[request.params.shortURL].longURL = request.body.longURL;
   response.redirect(`/urls`);
 });
 
 app.post('/urls/:shortURL/delete', (request, response) => {
+  if (!request.cookies.userid) return response.redirect('/login');
+  if (urlDatabase[request.params.shortURL].userID !== request.cookies.userid) return response.status(400).send('URL does not belong to current user');
   delete urlDatabase[request.params.shortURL];
   response.redirect(`/urls`);
 });
