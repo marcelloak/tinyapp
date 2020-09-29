@@ -55,6 +55,11 @@ app.get('/register', (request, response) => {
   response.render('register', templateVars);
 });
 
+app.get('/login', (request, response) => {
+  const templateVars = { urls: urlDatabase, user: users[request.cookies.userid] };
+  response.render('login', templateVars);
+});
+
 app.get('/urls', (request, response) => {
   const templateVars = { urls: urlDatabase, user: users[request.cookies.userid] };
   response.render('urls_index', templateVars);
