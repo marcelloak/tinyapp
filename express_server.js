@@ -41,7 +41,7 @@ const generateRandomString = function() {
 
 const userLookup = function(email) {
   for (const user in users) {
-    if (users[user].email === email) return true;
+    if (users[user].email === email) return users[user];
   }
   return false;
 }
@@ -87,7 +87,7 @@ app.get('/urls.json', (request, response) => {
 });
 
 app.post('/register', (request, response) => {
-  if (!request.body.email || !request.body.password || userLookup(request.body.email)) return response.statusCode = 404;
+  if (!request.body.email || !request.body.password || userLookup(request.body.email)) return response.status(400).end();
   const user = {};
   user.id = generateRandomString();
   user.email = request.body.email;
@@ -98,7 +98,9 @@ app.post('/register', (request, response) => {
 });
 
 app.post('/login', (request, response) => {
-  response.cookie('username', request.body.username);
+  const user = userLookup(request.body.email);
+  if (!user || user.password !== request.body.password) return response.status(403);
+  response.cookie('userid', user.id);
   response.redirect(`/urls`);
 });
 
