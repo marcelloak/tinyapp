@@ -12,11 +12,22 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookies());
 
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com",
+  "b2xVn2": {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "aJ48lW",
+  },
+  "9sm5xK": {
+    longURL: "http://www.google.com",
+    userID: "aJ48lW",
+  },
 };
 
 const users = {
+  "1": {
+    id: "1", 
+    email: "1@1", 
+    password: "1"
+  },
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
@@ -66,17 +77,18 @@ app.get('/urls', (request, response) => {
 });
 
 app.get('/urls/new', (request, response) => {
+  if (!request.cookies.userid) return response.redirect('/login');
   const templateVars = { user: users[request.cookies.userid] }
   response.render('urls_new', templateVars);
 });
 
 app.get('/urls/:shortURL', (request, response) => {
-  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL], user: users[request.cookies.userid] };
+  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL].longURL, user: users[request.cookies.userid] };
   response.render('urls_show', templateVars);
 });
 
 app.get('/u/:shortURL', (request, response) => {
-  const longURL  = urlDatabase[request.params.shortURL];
+  const longURL  = urlDatabase[request.params.shortURL].longURL;
   if (longURL.includes('http://www.')) response.redirect(`${longURL}`);
   else if (longURL.includes('www.')) response.redirect(`http://${longURL}`);
   else response.redirect(`http://www.${longURL}`);
@@ -118,7 +130,7 @@ app.post('/urls', (request, response) => {
 });
 
 app.post('/urls/:shortURL', (request, response) => {
-  urlDatabase[request.params.shortURL] = request.body.longURL;
+  urlDatabase[request.params.shortURL].longURL = request.body.longURL;
   response.redirect(`/urls`);
 });
 
