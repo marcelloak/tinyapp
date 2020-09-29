@@ -87,7 +87,8 @@ app.get('/urls.json', (request, response) => {
 });
 
 app.post('/register', (request, response) => {
-  if (!request.body.email || !request.body.password || userLookup(request.body.email)) return response.status(400).end();
+  if (!request.body.email || !request.body.password) return response.status(400).send('Empty email or password');
+  if (userLookup(request.body.email)) return response.status(400).send('User already exists');
   const user = {};
   user.id = generateRandomString();
   user.email = request.body.email;
@@ -99,7 +100,8 @@ app.post('/register', (request, response) => {
 
 app.post('/login', (request, response) => {
   const user = userLookup(request.body.email);
-  if (!user || user.password !== request.body.password) return response.status(403).end();
+  if (!user) return response.status(403).send('Email not registered');
+  if (user.password !== request.body.password) return response.status(403).send('Password is incorrect');
   response.cookie('userid', user.id);
   response.redirect(`/urls`);
 });
