@@ -7,12 +7,26 @@ const app = express();
 const PORT = 8080;
 
 app.set('view engine', 'ejs');
+app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookies());
 
 const urlDatabase = {
   "b2xVn2": "http://www.lighthouselabs.ca",
   "9sm5xK": "http://www.google.com",
+};
+
+const users = {
+  "userRandomID": {
+    id: "userRandomID", 
+    email: "user@example.com", 
+    password: "purple-monkey-dinosaur"
+  },
+ "user2RandomID": {
+    id: "user2RandomID", 
+    email: "user2@example.com", 
+    password: "dishwasher-funk"
+  }
 };
 
 const generateRandomString = function() {
@@ -25,26 +39,34 @@ const generateRandomString = function() {
   return rand;
 }
 
+const userLookup = function(email) {
+  for (const user in users) {
+    if (users[user].email === email) return true;
+  }
+  return false;
+}
+
 app.get('/', (request, response) => {
-  response.send('Hello!');
+  
 });
 
-app.get('/hello', (request, response) => {
-  response.send('<html><body>Hello <b>World</b></body></html>\n');
+app.get('/register', (request, response) => {
+  const templateVars = { urls: urlDatabase, user: users[request.cookies.userid] };
+  response.render('register', templateVars);
 });
 
 app.get('/urls', (request, response) => {
-  const templateVars = { urls: urlDatabase, username: request.cookies.username };
+  const templateVars = { urls: urlDatabase, user: users[request.cookies.userid] };
   response.render('urls_index', templateVars);
 });
 
 app.get('/urls/new', (request, response) => {
-  const templateVars = { username: request.cookies.username }
+  const templateVars = { user: users[request.cookies.userid] }
   response.render('urls_new', templateVars);
 });
 
 app.get('/urls/:shortURL', (request, response) => {
-  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL], username: request.cookies.username };
+  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL], user: users[request.cookies.userid] };
   response.render('urls_show', templateVars);
 });
 
@@ -59,13 +81,24 @@ app.get('/urls.json', (request, response) => {
   response.json(urlDatabase);
 });
 
+app.post('/register', (request, response) => {
+  if (!request.body.email || !request.body.password || userLookup(request.body.email)) return response.statusCode = 404;
+  const user = {};
+  user.id = generateRandomString();
+  user.email = request.body.email;
+  user.password = request.body.password;
+  users[user.id] = user;
+  response.cookie('userid', user.id);
+  response.redirect('/urls');
+});
+
 app.post('/login', (request, response) => {
   response.cookie('username', request.body.username);
   response.redirect(`/urls`);
 });
 
 app.post('/logout', (request, response) => {
-  response.clearCookie('username');
+  response.clearCookie('userid');
   response.redirect(`/urls`);
 });
 
