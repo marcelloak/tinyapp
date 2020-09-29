@@ -99,7 +99,7 @@ app.post('/register', (request, response) => {
 
 app.post('/login', (request, response) => {
   const user = userLookup(request.body.email);
-  if (!user || user.password !== request.body.password) return response.status(403);
+  if (!user || user.password !== request.body.password) return response.status(403).end();
   response.cookie('userid', user.id);
   response.redirect(`/urls`);
 });
