@@ -1,3 +1,5 @@
+const { generateRandomString, userLookup, urlsForUser } = require('./helpers');
+
 const bodyParser = require('body-parser');
 const cookies = require('cookie-session');
 const bcrypt = require('bcrypt');
@@ -34,31 +36,6 @@ const users = {
   },
 };
 
-const generateRandomString = function() {
-  let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-  let rand = "";
-  let len = Math.ceil(Math.random() * 4) + 4; //random length from 5 to 8
-  for (let i = 0; i < len; i++) {
-    rand += characters.charAt(Math.floor(Math.random() * characters.length));;
-  }
-  return rand;
-}
-
-const userLookup = function(email) {
-  for (const user in users) {
-    if (users[user].email === email) return users[user];
-  }
-  return false;
-}
-
-const urlsForUser = function(id) {
-  const urls = {};
-  for (const url in urlDatabase) {
-    if (urlDatabase[url].userID === id) urls[url] = urlDatabase[url];
-  }
-  return urls;
-}
-
 app.get('/', (request, response) => {
   
 });
@@ -75,7 +52,7 @@ app.get('/login', (request, response) => {
 
 app.get('/urls', (request, response) => {
   if (!request.session.user_id) return response.redirect('/login');
-  const templateVars = { urls: urlsForUser(request.session.user_id), user: users[request.session.user_id] };
+  const templateVars = { urls: urlsForUser(request.session.user_id, urlDatabase), user: users[request.session.user_id] };
   response.render('urls_index', templateVars);
 });
 
@@ -105,7 +82,7 @@ app.get('/urls.json', (request, response) => {
 
 app.post('/register', (request, response) => {
   if (!request.body.email || !request.body.password) return response.status(400).send('Empty email or password');
-  if (userLookup(request.body.email)) return response.status(400).send('User already exists');
+  if (userLookup(request.body.email, users)) return response.status(400).send('User already exists');
   const user = {};
   user.id = generateRandomString();
   user.email = request.body.email;
@@ -116,7 +93,7 @@ app.post('/register', (request, response) => {
 });
 
 app.post('/login', (request, response) => {
-  const user = userLookup(request.body.email);
+  const user = userLookup(request.body.email, users);
   if (!user) return response.status(403).send('Email not registered');
   if (!bcrypt.compareSync(request.body.password, user.password)) return response.status(403).send('Password is incorrect');
   request.session.user_id = user.id;
@@ -124,7 +101,7 @@ app.post('/login', (request, response) => {
 });
 
 app.post('/logout', (request, response) => {
-  response.clearCookie('userid');
+  request.session.user_id = null;
   response.redirect(`/urls`);
 });
 
