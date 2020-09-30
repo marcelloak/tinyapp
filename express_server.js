@@ -21,6 +21,7 @@ app.use(cookies({
 
 let today = new Date();
 today = convertDate(today);
+console.log(today);
 
 const urlDatabase = {
   "b2xVn2": {

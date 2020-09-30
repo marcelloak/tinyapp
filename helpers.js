@@ -24,7 +24,11 @@ const urlsForUser = function(id, database) {
 }
 
 const convertDate = function(date) {
-  date = date.toISOString().split('T')[0];
+  let offset = date.getTimezoneOffset();
+  offset = offset || 6 * 60;
+  date = new Date(date.getTime() - (offset * 60 * 1000)); 
+  date = date.toISOString().split('T');
+  date = `${date[1].split('.')[0]} ${date[0].split('-')[1]}-${date[0].split('-')[2]}-${date[0].split('-')[0]}`;
   return date;
 }
 
