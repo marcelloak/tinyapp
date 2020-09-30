@@ -1,6 +1,7 @@
 const { generateRandomString, userLookup, urlsForUser } = require('./helpers');
 
 const cookies = require('cookie-session');
+const methodOverride = require('method-override');
 const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const morgan = require('morgan');
@@ -12,6 +13,7 @@ const PORT = 8080;
 app.set('view engine', 'ejs');
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(methodOverride('_method'))
 app.use(cookies({
   name: 'session',
   secret: 'BAh7CEkiD3Nlc3Npb25faWQGOgZFVEkiRTdhYTliNGY5ZjVmOTE4MjIxYTU50AMGM4OGI1Y',
@@ -111,14 +113,14 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${short}`);
 });
 
-app.post('/urls/:shortURL', (req, res) => {
+app.put('/urls/:shortURL', (req, res) => {
   if (!req.session.user_id) return res.redirect('/login');
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
   urlDatabase[req.params.shortURL].longURL = req.body.longURL;
   res.redirect(`/urls`);
 });
 
-app.post('/urls/:shortURL/delete', (req, res) => {
+app.delete('/urls/:shortURL', (req, res) => {
   if (!req.session.user_id) return res.redirect('/login');
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
   delete urlDatabase[req.params.shortURL];
