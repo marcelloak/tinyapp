@@ -1,3 +1,4 @@
+// Generates a random string of random length containing letters or numbers
 const generateRandomString = function() {
   let characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
   let rand = "";
@@ -8,6 +9,7 @@ const generateRandomString = function() {
   return rand;
 }
 
+// Returns back a user object that matches the given email within the given database, or false if none match
 const userLookup = function(email, database) {
   for (const user in database) {
     if (database[user].email === email) return database[user];
@@ -15,6 +17,7 @@ const userLookup = function(email, database) {
   return false;
 }
 
+// Returns all urls within given database that are owned by the given userid, or an empty object if none
 const urlsForUser = function(id, database) {
   const urls = {};
   for (const url in database) {
@@ -23,6 +26,7 @@ const urlsForUser = function(id, database) {
   return urls;
 }
 
+// Converts given date to better format, and adjusts for timezone if available or to MST if none available
 const convertDate = function(date) {
   let offset = date.getTimezoneOffset();
   offset = offset || 6 * 60;
@@ -32,6 +36,8 @@ const convertDate = function(date) {
   return date;
 }
 
+// Returns back true if given userid is within the unique visits of a given site within a given database of urls
+// or if site doesn't exist in database, otherwise returns false
 const checkAlreadyVisited = function(id, siteID, database) {
   let site = {};
   site = database[siteID];

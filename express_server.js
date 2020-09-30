@@ -19,9 +19,10 @@ app.use(cookies({
   secret: 'BAh7CEkiD3Nlc3Npb25faWQGOgZFVEkiRTdhYTliNGY5ZjVmOTE4MjIxYTU50AMGM4OGI1Y',
 }));
 
+// Creates a date of when the server is started
+// To be used as creation date of test urls
 let today = new Date();
 today = convertDate(today);
-console.log(today);
 
 const urlDatabase = {
   "b2xVn2": {
@@ -43,10 +44,10 @@ const urlDatabase = {
 };
 
 const users = {
-  "1": {
+  "1": { // basic user for testing purposes
     id: "1", 
     email: "1@1", 
-    password: "$2b$10$odvI5Eq0n7vicWt03uyOk.P/G53qaIr3uX6dUnkbE188.Vs9cPdJe"
+    password: "$2b$10$odvI5Eq0n7vicWt03uyOk.P/G53qaIr3uX6dUnkbE188.Vs9cPdJe" // hashed '1' for testing purposes
   },
 };
 
@@ -56,11 +57,13 @@ app.get('/', (req, res) => {
 });
 
 app.get('/register', (req, res) => {
+  if (req.session.user_id) return res.redirect('/urls');
   const templateVars = { urls: urlDatabase, user: users[req.session.user_id] };
   res.render('register', templateVars);
 });
 
 app.get('/login', (req, res) => {
+  if (req.session.user_id) return res.redirect('/urls');
   const templateVars = { urls: urlDatabase, user: users[req.session.user_id] };
   res.render('login', templateVars);
 });
@@ -77,27 +80,25 @@ app.get('/urls/new', (req, res) => {
   res.render('urls_new', templateVars);
 });
 
-app.get('/urls/:shortURL', (req, res) => {
-  if (!req.session.user_id) return res.redirect('/login');
-  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
-  const templateVars = { shortURL: req.params.shortURL, url: urlDatabase[req.params.shortURL], user: users[req.session.user_id] };
+app.get('/urls/:id', (req, res) => {
+  if (!req.session.user_id) return res.status(400).send('Need to be logged in to access');
+  if (!urlDatabase[req.params.id]) return res.status(404).send('URL does not exist');
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
+  const templateVars = { shortURL: req.params.id, url: urlDatabase[req.params.id], user: users[req.session.user_id] };
   res.render('urls_show', templateVars);
 });
 
-app.get('/u/:shortURL', (req, res) => {
-  const longURL  = urlDatabase[req.params.shortURL].longURL;
+app.get('/u/:id', (req, res) => {
+  if (!urlDatabase[req.params.id]) return res.status(404).send('URL does not exist');
+  const longURL  = urlDatabase[req.params.id].longURL;
   if (longURL.includes('http://www.')) res.redirect(`${longURL}`);
   else if (longURL.includes('www.')) res.redirect(`http://${longURL}`);
   else res.redirect(`http://www.${longURL}`);
-  urlDatabase[req.params.shortURL].numVisits++;
-  if (!checkAlreadyVisited(req.session.user_id, req.params.shortURL, urlDatabase)) urlDatabase[req.params.shortURL].uniqueVisits.push(req.session.user_id);
+  urlDatabase[req.params.id].numVisits++;
+  if (!checkAlreadyVisited(req.session.user_id, req.params.id, urlDatabase)) urlDatabase[req.params.id].uniqueVisits.push(req.session.user_id);
   let now = new Date();
   now = convertDate(now);
-  urlDatabase[req.params.shortURL].visits.push([now, req.session.user_id || "guest"]);
-});
-
-app.get('/urls.json', (req, res) => {
-  res.json(urlDatabase);
+  urlDatabase[req.params.id].visits.push([now, req.session.user_id || "guest"]);
 });
 
 app.post('/register', (req, res) => {
@@ -126,6 +127,7 @@ app.post('/logout', (req, res) => {
 });
 
 app.post('/urls', (req, res) => {
+  if (!req.session.user_id) return res.status(400).send('Need to be logged in to create tiny url');
   const short = generateRandomString();
   let now = new Date();
   now = convertDate(now);
@@ -133,17 +135,17 @@ app.post('/urls', (req, res) => {
   res.redirect(`/urls/${short}`);
 });
 
-app.put('/urls/:shortURL', (req, res) => {
-  if (!req.session.user_id) return res.redirect('/login');
-  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
-  urlDatabase[req.params.shortURL].longURL = req.body.longURL;
+app.put('/urls/:id', (req, res) => {
+  if (!req.session.user_id) return res.status(400).send('Need to be logged in to edit tiny url');
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
+  urlDatabase[req.params.id].longURL = req.body.longURL;
   res.redirect(`/urls`);
 });
 
-app.delete('/urls/:shortURL', (req, res) => {
-  if (!req.session.user_id) return res.redirect('/login');
-  if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
-  delete urlDatabase[req.params.shortURL];
+app.delete('/urls/:id', (req, res) => {
+  if (!req.session.user_id) return res.status(400).send('Need to be logged in to delete tiny url');
+  if (urlDatabase[req.params.id].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
+  delete urlDatabase[req.params.id];
   res.redirect(`/urls`);
 });
 
