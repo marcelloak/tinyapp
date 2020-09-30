@@ -10,8 +10,11 @@
     <div class="card text-center">
       <div class="card-header"></div>
       <div class="card-body">
-        <h5 class="card-title">TinyURL for: <%= longURL %></h5>
+        <h5 class="card-title">TinyURL for: <%= url.longURL %></h5>
         <p class="card-text">Short URL: <a href="/u/<%= shortURL %>"><%= shortURL %></a></p>
+        <p class="card-text">Created: <%= url.created %></a></p>
+        <p class="card-text">Visits: <%= url.numVisits %></a></p>
+        <p class="card-text">Unique Visits: <%= url.uniqueVisits.length %></a></p>
         <form class="form-inline" method="POST" action="/urls/<%= shortURL %>?_method=PUT">
           <div class="form-group mb-2">
             <label for="longURL">Enter a new URL:</label>
@@ -28,7 +31,7 @@
             </tr>
           </thead>
           <tbody>
-            <% for(let visit of visits) { %>
+            <% for(let visit of url.visits) { %>
               <tr>
                 <td><%= visit[0] %></td>
                 <td><%= visit[1] %></td>

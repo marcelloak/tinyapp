@@ -51,7 +51,8 @@ const users = {
 };
 
 app.get('/', (req, res) => {
-  
+  if (req.session.user_id) res.redirect('/urls');
+  else res.redirect('/login');
 });
 
 app.get('/register', (req, res) => {
@@ -65,7 +66,7 @@ app.get('/login', (req, res) => {
 });
 
 app.get('/urls', (req, res) => {
-  if (!req.session.user_id) return res.redirect('/login');
+  if (!req.session.user_id) return res.status(400).send('Need to be logged in to access');
   const templateVars = { urls: urlsForUser(req.session.user_id, urlDatabase), user: users[req.session.user_id] };
   res.render('urls_index', templateVars);
 });
@@ -79,7 +80,7 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   if (!req.session.user_id) return res.redirect('/login');
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, visits: urlDatabase[req.params.shortURL].visits, user: users[req.session.user_id] };
+  const templateVars = { shortURL: req.params.shortURL, url: urlDatabase[req.params.shortURL], user: users[req.session.user_id] };
   res.render('urls_show', templateVars);
 });
 
