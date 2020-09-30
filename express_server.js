@@ -1,4 +1,4 @@
-const { generateRandomString, userLookup, urlsForUser } = require('./helpers');
+const { generateRandomString, userLookup, urlsForUser, convertDate, checkAlreadyVisited } = require('./helpers');
 
 const cookies = require('cookie-session');
 const methodOverride = require('method-override');
@@ -19,14 +19,25 @@ app.use(cookies({
   secret: 'BAh7CEkiD3Nlc3Npb25faWQGOgZFVEkiRTdhYTliNGY5ZjVmOTE4MjIxYTU50AMGM4OGI1Y',
 }));
 
+let today = new Date();
+today = convertDate(today);
+
 const urlDatabase = {
   "b2xVn2": {
     longURL: "http://www.lighthouselabs.ca",
     userID: "1",
+    created: today,
+    numVisits: 0,
+    uniqueVisits: [],
+    visits: [],
   },
   "9sm5xK": {
     longURL: "http://www.google.com",
     userID: "aJ48lW",
+    created: today,
+    numVisits: 0,
+    uniqueVisits: [],
+    visits: [],
   },
 };
 
@@ -67,7 +78,7 @@ app.get('/urls/new', (req, res) => {
 app.get('/urls/:shortURL', (req, res) => {
   if (!req.session.user_id) return res.redirect('/login');
   if (urlDatabase[req.params.shortURL].userID !== req.session.user_id) return res.status(400).send('URL does not belong to current user');
-  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, user: users[req.session.user_id] };
+  const templateVars = { shortURL: req.params.shortURL, longURL: urlDatabase[req.params.shortURL].longURL, visits: urlDatabase[req.params.shortURL].visits, user: users[req.session.user_id] };
   res.render('urls_show', templateVars);
 });
 
@@ -76,6 +87,11 @@ app.get('/u/:shortURL', (req, res) => {
   if (longURL.includes('http://www.')) res.redirect(`${longURL}`);
   else if (longURL.includes('www.')) res.redirect(`http://${longURL}`);
   else res.redirect(`http://www.${longURL}`);
+  urlDatabase[req.params.shortURL].numVisits++;
+  if (!checkAlreadyVisited(req.session.user_id, req.params.shortURL, urlDatabase)) urlDatabase[req.params.shortURL].uniqueVisits.push(req.session.user_id);
+  let now = new Date();
+  now = convertDate(now);
+  urlDatabase[req.params.shortURL].visits.push([now, req.session.user_id || "guest"]);
 });
 
 app.get('/urls.json', (req, res) => {
@@ -109,7 +125,9 @@ app.post('/logout', (req, res) => {
 
 app.post('/urls', (req, res) => {
   const short = generateRandomString();
-  urlDatabase[short] = { longURL: req.body.longURL, userID: req.session.user_id };
+  let now = new Date();
+  now = convertDate(now);
+  urlDatabase[short] = { longURL: req.body.longURL, userID: req.session.user_id, created: now, numVisits: 0, uniqueVisits: [], visits: []};
   res.redirect(`/urls/${short}`);
 });
 

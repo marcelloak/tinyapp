@@ -23,4 +23,19 @@ const urlsForUser = function(id, database) {
   return urls;
 }
 
-module.exports = { generateRandomString, userLookup, urlsForUser }
+const convertDate = function(date) {
+  date = date.toISOString().split('T')[0];
+  return date;
+}
+
+const checkAlreadyVisited = function(id, siteID, database) {
+  let site = {};
+  site = database[siteID];
+  if (!site) return true;
+  for (const ids of site.uniqueVisits) {
+    if (ids === id) return true;
+  }
+  return false;
+}
+
+module.exports = { generateRandomString, userLookup, urlsForUser, convertDate, checkAlreadyVisited }

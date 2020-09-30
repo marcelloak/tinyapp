@@ -19,6 +19,23 @@
             <button type="submit" class="btn btn-primary">Submit</button>
           </div>
         </form>
+        <h3>Visits</h3>
+        <table class="table">
+          <thead>
+            <tr>
+              <th scope="col">Date</th>
+              <th scope="col">User</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% for(let visit of visits) { %>
+              <tr>
+                <td><%= visit[0] %></td>
+                <td><%= visit[1] %></td>
+              </tr>
+            <% } %>
+          </tbody>
+        </table>
       </div>
       <div class="card-footer text-muted"></div>
     </div>
