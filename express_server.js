@@ -1,5 +1,6 @@
 const bodyParser = require('body-parser');
 const cookies = require('cookie-parser');
+const bcrypt = require('bcrypt');
 const morgan = require('morgan');
 const express = require('express');
 
@@ -26,18 +27,8 @@ const users = {
   "1": {
     id: "1", 
     email: "1@1", 
-    password: "1"
+    password: "$2b$10$odvI5Eq0n7vicWt03uyOk.P/G53qaIr3uX6dUnkbE188.Vs9cPdJe"
   },
-  "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
-  },
- "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
-    password: "dishwasher-funk"
-  }
 };
 
 const generateRandomString = function() {
@@ -115,7 +106,8 @@ app.post('/register', (request, response) => {
   const user = {};
   user.id = generateRandomString();
   user.email = request.body.email;
-  user.password = request.body.password;
+  user.password = bcrypt.hashSync(request.body.password, 10);
+  console.log(user.password);
   users[user.id] = user;
   response.cookie('userid', user.id);
   response.redirect('/urls');
@@ -124,7 +116,7 @@ app.post('/register', (request, response) => {
 app.post('/login', (request, response) => {
   const user = userLookup(request.body.email);
   if (!user) return response.status(403).send('Email not registered');
-  if (user.password !== request.body.password) return response.status(403).send('Password is incorrect');
+  if (!bcrypt.compareSync(request.body.password, user.password)) return response.status(403).send('Password is incorrect');
   response.cookie('userid', user.id);
   response.redirect(`/urls`);
 });
