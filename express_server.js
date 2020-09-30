@@ -1,5 +1,5 @@
 const bodyParser = require('body-parser');
-const cookies = require('cookie-parser');
+const cookies = require('cookie-session');
 const bcrypt = require('bcrypt');
 const morgan = require('morgan');
 const express = require('express');
@@ -10,7 +10,10 @@ const PORT = 8080;
 app.set('view engine', 'ejs');
 app.use(morgan('dev'));
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookies());
+app.use(cookies({
+  name: 'session',
+  secret: 'BAh7CEkiD3Nlc3Npb25faWQGOgZFVEkiRTdhYTliNGY5ZjVmOTE4MjIxYTU50AMGM4OGI1Y',
+}));
 
 const urlDatabase = {
   "b2xVn2": {
@@ -61,31 +64,31 @@ app.get('/', (request, response) => {
 });
 
 app.get('/register', (request, response) => {
-  const templateVars = { urls: urlDatabase, user: users[request.cookies.userid] };
+  const templateVars = { urls: urlDatabase, user: users[request.session.user_id] };
   response.render('register', templateVars);
 });
 
 app.get('/login', (request, response) => {
-  const templateVars = { urls: urlDatabase, user: users[request.cookies.userid] };
+  const templateVars = { urls: urlDatabase, user: users[request.session.user_id] };
   response.render('login', templateVars);
 });
 
 app.get('/urls', (request, response) => {
-  if (!request.cookies.userid) return response.redirect('/login');
-  const templateVars = { urls: urlsForUser(request.cookies.userid), user: users[request.cookies.userid] };
+  if (!request.session.user_id) return response.redirect('/login');
+  const templateVars = { urls: urlsForUser(request.session.user_id), user: users[request.session.user_id] };
   response.render('urls_index', templateVars);
 });
 
 app.get('/urls/new', (request, response) => {
-  if (!request.cookies.userid) return response.redirect('/login');
-  const templateVars = { user: users[request.cookies.userid] }
+  if (!request.session.user_id) return response.redirect('/login');
+  const templateVars = { user: users[request.session.user_id] }
   response.render('urls_new', templateVars);
 });
 
 app.get('/urls/:shortURL', (request, response) => {
-  if (!request.cookies.userid) return response.redirect('/login');
-  if (urlDatabase[request.params.shortURL].userID !== request.cookies.userid) return response.status(400).send('URL does not belong to current user');
-  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL].longURL, user: users[request.cookies.userid] };
+  if (!request.session.user_id) return response.redirect('/login');
+  if (urlDatabase[request.params.shortURL].userID !== request.session.user_id) return response.status(400).send('URL does not belong to current user');
+  const templateVars = { shortURL: request.params.shortURL, longURL: urlDatabase[request.params.shortURL].longURL, user: users[request.session.user_id] };
   response.render('urls_show', templateVars);
 });
 
@@ -107,9 +110,8 @@ app.post('/register', (request, response) => {
   user.id = generateRandomString();
   user.email = request.body.email;
   user.password = bcrypt.hashSync(request.body.password, 10);
-  console.log(user.password);
   users[user.id] = user;
-  response.cookie('userid', user.id);
+  request.session.user_id = user.id;
   response.redirect('/urls');
 });
 
@@ -117,7 +119,7 @@ app.post('/login', (request, response) => {
   const user = userLookup(request.body.email);
   if (!user) return response.status(403).send('Email not registered');
   if (!bcrypt.compareSync(request.body.password, user.password)) return response.status(403).send('Password is incorrect');
-  response.cookie('userid', user.id);
+  request.session.user_id = user.id;
   response.redirect(`/urls`);
 });
 
@@ -128,20 +130,20 @@ app.post('/logout', (request, response) => {
 
 app.post('/urls', (request, response) => {
   const short = generateRandomString();
-  urlDatabase[short] = { longURL: request.body.longURL, userID: request.cookies.userid };
+  urlDatabase[short] = { longURL: request.body.longURL, userID: request.session.user_id };
   response.redirect(`/urls/${short}`);
 });
 
 app.post('/urls/:shortURL', (request, response) => {
-  if (!request.cookies.userid) return response.redirect('/login');
-  if (urlDatabase[request.params.shortURL].userID !== request.cookies.userid) return response.status(400).send('URL does not belong to current user');
+  if (!request.session.user_id) return response.redirect('/login');
+  if (urlDatabase[request.params.shortURL].userID !== request.session.user_id) return response.status(400).send('URL does not belong to current user');
   urlDatabase[request.params.shortURL].longURL = request.body.longURL;
   response.redirect(`/urls`);
 });
 
 app.post('/urls/:shortURL/delete', (request, response) => {
-  if (!request.cookies.userid) return response.redirect('/login');
-  if (urlDatabase[request.params.shortURL].userID !== request.cookies.userid) return response.status(400).send('URL does not belong to current user');
+  if (!request.session.user_id) return response.redirect('/login');
+  if (urlDatabase[request.params.shortURL].userID !== request.session.user_id) return response.status(400).send('URL does not belong to current user');
   delete urlDatabase[request.params.shortURL];
   response.redirect(`/urls`);
 });
