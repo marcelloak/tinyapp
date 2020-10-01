@@ -1,19 +1,18 @@
-const { generateRandomString, userLookup, urlsForUser } = require('../helpers');
-
+const { userLookup } = require('../helpers');
 const { assert } = require('chai');
 
 const testUsers = {
   "userRandomID": {
-    id: "userRandomID", 
-    email: "user@example.com", 
+    id: "userRandomID",
+    email: "user@example.com",
     password: "purple-monkey-dinosaur"
   },
   "user2RandomID": {
-    id: "user2RandomID", 
-    email: "user2@example.com", 
+    id: "user2RandomID",
+    email: "user2@example.com",
     password: "dishwasher-funk"
   }
-}
+};
 
 describe('userLookup', () => {
   it('should return a user when given valid email', () => {
